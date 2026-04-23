@@ -1,5 +1,7 @@
 # ComfyUI-WorkflowNavigator
 
+https://github.com/user-attachments/assets/2a137966-77bc-4ae9-9412-6729f76b5a78
+
 A frontend-only extension for [ComfyUI](https://github.com/comfyanonymous/ComfyUI) that adds a `Navigator` sidebar for keyboard-first workflow search and jump.
 
 This is designed for large graphs and/or small displays, where manually panning around the canvas gets tedious. It lets you open a search panel, type what you are looking for, move through results with the keyboard, and jump directly to the matching part of the current workflow.
