@@ -46,6 +46,14 @@ Once the panel is open:
 - No monkey-patching of LiteGraph or ComfyUI internals.
 - No backend Python node implementation required beyond static asset packaging.
 
+The Workflow Navigator also has several advantages over Comfy's built-in Properties Panel:
+
+- The Properties Panel only shows nodes, not subgraphs nor other result types.
+- The Properties Panel is quite slow on large workflows. It can take 3-4 seconds for results to populate.
+- It doesn't appear to have a toggle keybind, and it doesn't auto-focus the search box.
+- Keyboard navigation in this panel is cumbersome.
+- The search scoring is questionable, e.g. searching for "set_init" will produce results for "get_init" before "set."
+
 ## Notes
 
 - The implementation uses official ComfyUI frontend extension APIs:
