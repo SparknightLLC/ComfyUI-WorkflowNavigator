@@ -15,7 +15,6 @@ export const FILTER_FRAMES_GROUPS = "frames_groups";
 export const FILTER_SUBGRAPHS = "subgraphs";
 
 export const FILTER_DEFINITIONS = [
-	{ id: FILTER_ALL, label: "All" },
 	{ id: FILTER_TITLES, label: "Titles" },
 	{ id: FILTER_TYPES, label: "Types" },
 	{ id: FILTER_NOTES, label: "Notes" },

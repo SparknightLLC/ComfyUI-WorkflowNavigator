@@ -172,9 +172,87 @@ function get_default_results(entries, filter_id, limit)
 	return results;
 }
 
+function normalize_filter_ids(filter_ids)
+{
+	if (!Array.isArray(filter_ids))
+	{
+		return [filter_ids || FILTER_ALL];
+	}
+
+	const normalized_filter_ids = filter_ids.filter(Boolean);
+
+	return normalized_filter_ids.length ? normalized_filter_ids : [];
+}
+
+function get_default_results_for_filters(entries, filter_ids, limit)
+{
+	if (!filter_ids.length)
+	{
+		return [];
+	}
+
+	if (filter_ids.includes(FILTER_ALL))
+	{
+		return get_default_results(entries, FILTER_ALL, limit);
+	}
+
+	const results = [];
+
+	for (const entry of entries)
+	{
+		if (!filter_ids.some((filter_id) => entry_allowed_for_filter(entry, filter_id)))
+		{
+			continue;
+		}
+
+		results.push(entry);
+
+		if (results.length >= limit)
+		{
+			break;
+		}
+	}
+
+	return results;
+}
+
+function get_entry_score_for_filters(entry, query_terms, filter_ids)
+{
+	if (filter_ids.includes(FILTER_ALL))
+	{
+		if (!entry_allowed_for_filter(entry, FILTER_ALL))
+		{
+			return Number.POSITIVE_INFINITY;
+		}
+
+		return get_entry_score(entry, query_terms, FILTER_ALL);
+	}
+
+	let best_score = Number.POSITIVE_INFINITY;
+
+	for (const filter_id of filter_ids)
+	{
+		if (!entry_allowed_for_filter(entry, filter_id))
+		{
+			continue;
+		}
+
+		best_score = Math.min(best_score, get_entry_score(entry, query_terms, filter_id));
+	}
+
+	return best_score;
+}
+
 function search_entries(entries, query, filter_id, limit)
 {
 	if (limit <= 0)
+	{
+		return [];
+	}
+
+	const filter_ids = normalize_filter_ids(filter_id);
+
+	if (!filter_ids.length)
 	{
 		return [];
 	}
@@ -183,19 +261,14 @@ function search_entries(entries, query, filter_id, limit)
 
 	if (!query_terms.length)
 	{
-		return get_default_results(entries, filter_id, limit);
+		return get_default_results_for_filters(entries, filter_ids, limit);
 	}
 
 	const ranked_entries = [];
 
 	for (const entry of entries)
 	{
-		if (!entry_allowed_for_filter(entry, filter_id))
-		{
-			continue;
-		}
-
-		const entry_score = get_entry_score(entry, query_terms, filter_id);
+		const entry_score = get_entry_score_for_filters(entry, query_terms, filter_ids);
 
 		if (!Number.isFinite(entry_score))
 		{
@@ -229,9 +302,10 @@ export function create_search_engine(graph_index, settings_store)
 		const entries = graph_index.ensure();
 		const normalized_query = normalize_query(query);
 		const result_limit = settings_store.get_max_rendered_results();
+		const filter_ids = normalize_filter_ids(filter_id);
 		const cache_key = [
 			graph_index.get_revision(),
-			filter_id,
+			filter_ids.join(","),
 			result_limit,
 			normalized_query,
 		].join("|");
@@ -241,7 +315,7 @@ export function create_search_engine(graph_index, settings_store)
 			return query_cache.get(cache_key);
 		}
 
-		const results = search_entries(entries, normalized_query, filter_id, result_limit);
+		const results = search_entries(entries, normalized_query, filter_ids, result_limit);
 
 		query_cache.set(cache_key, results);
 

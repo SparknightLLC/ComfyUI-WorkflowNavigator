@@ -10,14 +10,6 @@ export function create_element(tag_name, class_name)
 	return element;
 }
 
-export function escape_html(value)
-{
-	return String(value ?? "")
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;");
-}
-
 export function get_trimmed_string(value)
 {
 	return typeof value === "string" ? value.trim() : "";

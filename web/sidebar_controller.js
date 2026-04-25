@@ -195,5 +195,6 @@ export function create_sidebar_controller(app, tab_id)
 		close_from_surface,
 		is_open,
 		focus_canvas,
+		get_sidebar_tab_button,
 	};
 }
