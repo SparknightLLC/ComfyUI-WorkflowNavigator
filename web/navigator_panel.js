@@ -20,27 +20,49 @@ function get_entry_kind_label(kind)
 	}
 }
 
+function get_short_meta_text(value, max_length = 96)
+{
+	const normalized_value = String(value ?? "").replace(/\s+/g, " ").trim();
+
+	if (normalized_value.length <= max_length)
+	{
+		return normalized_value;
+	}
+
+	return `${normalized_value.slice(0, max_length - 3).trim()}...`;
+}
+
 function get_result_meta_text(entry)
 {
 	const parts = [];
 
 	if (entry.kind === "node")
 	{
-		parts.push(entry.type || "Node");
 		parts.push(`id ${entry.id}`);
+		parts.push(entry.type || "Node");
 	}
 	else if (entry.kind === "group")
 	{
-		parts.push("Frame/Group");
+		parts.push(entry.meta_label || "Frame/Group");
+
+		if (Array.isArray(entry.bounds) && entry.bounds.length >= 4)
+		{
+			parts.push(`${Math.round(entry.bounds[2])} x ${Math.round(entry.bounds[3])}`);
+		}
 	}
 	else if (entry.kind === "subgraph_entry")
 	{
-		parts.push("Subgraph");
+		parts.push(entry.meta_label || "Subgraph");
 	}
 
 	if (entry.path)
 	{
-		parts.push(entry.path);
+		parts.push(`in ${entry.path}`);
+	}
+
+	if (entry.note_text)
+	{
+		parts.push(`note: ${get_short_meta_text(entry.note_text)}`);
 	}
 
 	return parts.join("  |  ");
@@ -510,8 +532,11 @@ export function create_navigator_panel(dependencies)
 			return;
 		}
 
+		const selected_entry = state.results[state.selected_index];
+
+		search_engine.record_usage(selected_entry);
 		navigator.jump_to_entry(
-			state.results[state.selected_index],
+			selected_entry,
 			{
 				keep_panel_open: keep_panel_open,
 				refocus_search: () =>
@@ -854,7 +879,7 @@ export function create_navigator_panel(dependencies)
 
 	settings_store.subscribe((changed_key) =>
 	{
-		if (changed_key === "max_rendered_results")
+		if (changed_key === "max_rendered_results" || changed_key === "usage_aware_ranking")
 		{
 			search_engine.clear_cache();
 			schedule_search(true);

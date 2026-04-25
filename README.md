@@ -26,6 +26,8 @@ Once the panel is open:
 - Press `Shift+Enter` to jump and keep the Navigator open.
 - Press `Esc` to clear the search, then press it again to close the panel.
 
+Settings are available in ComfyUI's settings panel for max rendered results, usage-aware ranking, search debounce, and jump zoom behavior. Jump zoom is a fit factor: lower values keep more surrounding canvas visible, while higher values frame the selected item more tightly.
+
 ## Features
 
 - Adds a dedicated `Navigator` sidebar tab.
@@ -33,6 +35,8 @@ Once the panel is open:
 - Ships with a default `Ctrl+Shift+F` hotkey.
 - Uses lazy graph enumeration with invalidation on workflow changes.
 - Supports keyboard-first result navigation inside the panel.
+- Can optionally prioritize workflow items you jump to often.
+- Lets you keep, disable, or tune the zoom level used when jumping.
 - Jumps directly to matching workflow items, including:
 	- nodes in the current workflow
 	- note-like nodes when their text is exposed by the frontend model
@@ -41,18 +45,16 @@ Once the panel is open:
 
 ### Why Use It?
 
-- Faster navigation in large workflows.
+- Focused current-workflow search instead of a general command launcher or add-node browser.
+- Faster navigation in large workflows, especially when the canvas is hard to inspect at a glance.
 - Better usability on laptops, remote desktops, and smaller displays.
-- No monkey-patching of LiteGraph or ComfyUI internals.
+- Broader workflow coverage than node-only lists, including note-like nodes, groups/frames, and nested subgraphs when Comfy exposes them to the frontend.
+- Keyboard-first open, search, select, and jump behavior with a configurable toggle hotkey.
+- Optional usage-aware ranking so frequently visited workflow items can rise naturally over time.
+- Native-sidebar presentation without monkey-patching LiteGraph or ComfyUI internals.
 - No backend Python node implementation required beyond static asset packaging.
 
-The Workflow Navigator also has several advantages over Comfy's built-in Properties Panel:
-
-- The Properties Panel only shows nodes, not subgraphs nor other result types.
-- The Properties Panel is quite slow on large workflows. It can take 3-4 seconds for results to populate.
-- It doesn't appear to have a toggle keybind, and it doesn't auto-focus the search box.
-- Keyboard navigation in this panel is cumbersome.
-- The search scoring is questionable, e.g. searching for "set_init" will produce results for "get_init" before "set."
+Compared with Comfy's built-in Properties Panel, Workflow Navigator is tuned specifically for search-and-jump navigation. It auto-focuses the search field, supports direct keyboard result navigation, includes node IDs in results, and avoids relying on a node-only results list.
 
 ## Notes
 

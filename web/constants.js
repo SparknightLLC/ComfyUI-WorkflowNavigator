@@ -5,6 +5,8 @@ export const DEFAULT_ICON = "pi pi-compass";
 export const STYLE_ID = "workflow-navigator-style";
 export const DEFAULT_GROUP_SIZE = [320, 180];
 export const DEFAULT_JUMP_ZOOM = 0.75;
+export const USAGE_STORAGE_KEY = "WorkflowNavigator.Usage.v1";
+export const MAX_USAGE_RECORDS = 500;
 export const NOTE_LIKE_PATTERN = /(note|comment|annotation|markdown|sticky)/i;
 
 export const FILTER_ALL = "all";
@@ -25,12 +27,18 @@ export const FILTER_DEFINITIONS = [
 export const SETTINGS = {
 	MAX_RENDERED_RESULTS_ID: "WorkflowNavigator.MaxRenderedResults",
 	JUMP_ZOOM_ENABLED_ID: "WorkflowNavigator.JumpZoomEnabled",
+	JUMP_ZOOM_ID: "WorkflowNavigator.JumpZoom",
+	USAGE_AWARE_RANKING_ID: "WorkflowNavigator.UsageAwareRanking",
 	QUERY_DEBOUNCE_MS_ID: "WorkflowNavigator.QueryDebounceMs",
 	DEFAULT_MAX_RENDERED_RESULTS: 50,
 	DEFAULT_JUMP_ZOOM_ENABLED: true,
+	DEFAULT_JUMP_ZOOM: DEFAULT_JUMP_ZOOM,
+	DEFAULT_USAGE_AWARE_RANKING: true,
 	DEFAULT_QUERY_DEBOUNCE_MS: 40,
 	MIN_MAX_RENDERED_RESULTS: 10,
 	MAX_MAX_RENDERED_RESULTS: 500,
+	MIN_JUMP_ZOOM: 0.35,
+	MAX_JUMP_ZOOM: 1.25,
 	MIN_QUERY_DEBOUNCE_MS: 0,
 	MAX_QUERY_DEBOUNCE_MS: 500,
 };

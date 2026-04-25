@@ -79,17 +79,19 @@
 	margin: 0;
 	padding: 0;
 	border: 0;
-	border-radius: 0.5rem;
-	background: var(--p-button-secondary-background, var(--comfy-input-bg, transparent));
-	color: var(--text-muted, var(--fg-color, inherit));
+	border-radius: 0.375rem;
+	background: var(--color-secondary-background, var(--secondary-background, var(--comfy-input-bg, transparent)));
+	color: var(--color-secondary-foreground, var(--secondary-foreground, var(--fg-color, inherit)));
 	cursor: pointer;
+	font: inherit;
+	transition: background-color 150ms, color 150ms;
 }
 
 .workflow-navigator-filter-button:hover,
 .workflow-navigator-filter-button[aria-expanded="true"]
 {
-	background: var(--p-content-hover-background, var(--comfy-input, rgba(127, 127, 127, 0.16)));
-	color: var(--fg-color, inherit);
+	background: var(--color-secondary-background-hover, var(--secondary-background-hover, var(--comfy-input, rgba(127, 127, 127, 0.16))));
+	color: var(--color-secondary-foreground, var(--secondary-foreground, var(--fg-color, inherit)));
 }
 
 .workflow-navigator-filter-menu

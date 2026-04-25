@@ -5,8 +5,71 @@ import {
 	FILTER_SUBGRAPHS,
 	FILTER_TITLES,
 	FILTER_TYPES,
+	MAX_USAGE_RECORDS,
+	USAGE_STORAGE_KEY,
 } from "./constants.js";
 import { get_query_terms, normalize_query } from "./utils.js";
+
+function load_usage_records()
+{
+	try
+	{
+		const raw_records = window.localStorage?.getItem(USAGE_STORAGE_KEY);
+		const parsed_records = raw_records ? JSON.parse(raw_records) : {};
+
+		return parsed_records && typeof parsed_records === "object" && !Array.isArray(parsed_records)
+			? parsed_records
+			: {};
+	}
+	catch
+	{
+		return {};
+	}
+}
+
+function save_usage_records(records)
+{
+	try
+	{
+		window.localStorage?.setItem(USAGE_STORAGE_KEY, JSON.stringify(records));
+	}
+	catch
+	{
+		// Local storage may be disabled; ranking can still work for the current session.
+	}
+}
+
+function trim_usage_records(records)
+{
+	const entries = Object.entries(records);
+
+	if (entries.length <= MAX_USAGE_RECORDS)
+	{
+		return records;
+	}
+
+	const trimmed_entries = entries
+		.sort((left_entry, right_entry) =>
+		{
+			return Number(right_entry[1]?.last_used ?? 0) - Number(left_entry[1]?.last_used ?? 0);
+		})
+		.slice(0, MAX_USAGE_RECORDS);
+
+	return Object.fromEntries(trimmed_entries);
+}
+
+function get_usage_boost(records, entry)
+{
+	const record = records[entry.entry_id];
+	const count = Number(record?.count ?? 0);
+
+	if (!Number.isFinite(count) || count <= 0)
+	{
+		return 0;
+	}
+
+	return Math.min(45, Math.log2(count + 1) * 14);
+}
 
 function get_field_text_for_filter(entry, filter_id)
 {
@@ -115,6 +178,29 @@ function compare_ranked_entries(left_ranked_entry, right_ranked_entry)
 	return left_ranked_entry.entry.stable_index - right_ranked_entry.entry.stable_index;
 }
 
+function compare_usage_ranked_entries(left_entry, right_entry, usage_records)
+{
+	const left_boost = get_usage_boost(usage_records, left_entry);
+	const right_boost = get_usage_boost(usage_records, right_entry);
+
+	if (left_boost !== right_boost)
+	{
+		return right_boost - left_boost;
+	}
+
+	const left_record = usage_records[left_entry.entry_id];
+	const right_record = usage_records[right_entry.entry_id];
+	const left_last_used = Number(left_record?.last_used ?? 0);
+	const right_last_used = Number(right_record?.last_used ?? 0);
+
+	if (left_last_used !== right_last_used)
+	{
+		return right_last_used - left_last_used;
+	}
+
+	return left_entry.stable_index - right_entry.stable_index;
+}
+
 function insert_ranked_entry(sorted_ranked_entries, next_ranked_entry, limit)
 {
 	if (limit <= 0)
@@ -150,7 +236,17 @@ function insert_ranked_entry(sorted_ranked_entries, next_ranked_entry, limit)
 	}
 }
 
-function get_default_results(entries, filter_id, limit)
+function apply_usage_ranking(entries, usage_records, limit)
+{
+	return [...entries]
+		.sort((left_entry, right_entry) =>
+		{
+			return compare_usage_ranked_entries(left_entry, right_entry, usage_records);
+		})
+		.slice(0, limit);
+}
+
+function get_default_results(entries, filter_id, limit, usage_records)
 {
 	const results = [];
 
@@ -163,13 +259,13 @@ function get_default_results(entries, filter_id, limit)
 
 		results.push(entry);
 
-		if (results.length >= limit)
+		if (!usage_records && results.length >= limit)
 		{
 			break;
 		}
 	}
 
-	return results;
+	return usage_records ? apply_usage_ranking(results, usage_records, limit) : results;
 }
 
 function normalize_filter_ids(filter_ids)
@@ -184,7 +280,7 @@ function normalize_filter_ids(filter_ids)
 	return normalized_filter_ids.length ? normalized_filter_ids : [];
 }
 
-function get_default_results_for_filters(entries, filter_ids, limit)
+function get_default_results_for_filters(entries, filter_ids, limit, usage_records)
 {
 	if (!filter_ids.length)
 	{
@@ -193,7 +289,7 @@ function get_default_results_for_filters(entries, filter_ids, limit)
 
 	if (filter_ids.includes(FILTER_ALL))
 	{
-		return get_default_results(entries, FILTER_ALL, limit);
+		return get_default_results(entries, FILTER_ALL, limit, usage_records);
 	}
 
 	const results = [];
@@ -207,13 +303,13 @@ function get_default_results_for_filters(entries, filter_ids, limit)
 
 		results.push(entry);
 
-		if (results.length >= limit)
+		if (!usage_records && results.length >= limit)
 		{
 			break;
 		}
 	}
 
-	return results;
+	return usage_records ? apply_usage_ranking(results, usage_records, limit) : results;
 }
 
 function get_entry_score_for_filters(entry, query_terms, filter_ids)
@@ -243,7 +339,7 @@ function get_entry_score_for_filters(entry, query_terms, filter_ids)
 	return best_score;
 }
 
-function search_entries(entries, query, filter_id, limit)
+function search_entries(entries, query, filter_id, limit, usage_records)
 {
 	if (limit <= 0)
 	{
@@ -261,7 +357,7 @@ function search_entries(entries, query, filter_id, limit)
 
 	if (!query_terms.length)
 	{
-		return get_default_results_for_filters(entries, filter_ids, limit);
+		return get_default_results_for_filters(entries, filter_ids, limit, usage_records);
 	}
 
 	const ranked_entries = [];
@@ -279,7 +375,9 @@ function search_entries(entries, query, filter_id, limit)
 			ranked_entries,
 			{
 				entry: entry,
-				score: entry_score,
+				score: usage_records
+					? entry_score - get_usage_boost(usage_records, entry)
+					: entry_score,
 			},
 			limit
 		);
@@ -291,6 +389,8 @@ function search_entries(entries, query, filter_id, limit)
 export function create_search_engine(graph_index, settings_store)
 {
 	const query_cache = new Map();
+	let usage_records = load_usage_records();
+	let usage_revision = 0;
 
 	function clear_cache()
 	{
@@ -303,8 +403,11 @@ export function create_search_engine(graph_index, settings_store)
 		const normalized_query = normalize_query(query);
 		const result_limit = settings_store.get_max_rendered_results();
 		const filter_ids = normalize_filter_ids(filter_id);
+		const usage_ranking_enabled = settings_store.is_usage_aware_ranking_enabled();
+		const active_usage_records = usage_ranking_enabled ? usage_records : null;
 		const cache_key = [
 			graph_index.get_revision(),
+			usage_ranking_enabled ? usage_revision : "usage-off",
 			filter_ids.join(","),
 			result_limit,
 			normalized_query,
@@ -315,7 +418,13 @@ export function create_search_engine(graph_index, settings_store)
 			return query_cache.get(cache_key);
 		}
 
-		const results = search_entries(entries, normalized_query, filter_ids, result_limit);
+		const results = search_entries(
+			entries,
+			normalized_query,
+			filter_ids,
+			result_limit,
+			active_usage_records
+		);
 
 		query_cache.set(cache_key, results);
 
@@ -328,8 +437,30 @@ export function create_search_engine(graph_index, settings_store)
 		return results;
 	}
 
+	function record_usage(entry)
+	{
+		if (!entry?.entry_id)
+		{
+			return;
+		}
+
+		const current_record = usage_records[entry.entry_id] ?? {};
+
+		usage_records = trim_usage_records({
+			...usage_records,
+			[entry.entry_id]: {
+				count: Number(current_record.count ?? 0) + 1,
+				last_used: Date.now(),
+			},
+		});
+		usage_revision += 1;
+		save_usage_records(usage_records);
+		clear_cache();
+	}
+
 	return {
 		search,
+		record_usage,
 		clear_cache,
 	};
 }

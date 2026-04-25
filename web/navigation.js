@@ -1,4 +1,3 @@
-import { DEFAULT_JUMP_ZOOM } from "./constants.js";
 import { get_graph_bounds, get_node_bounds } from "./graph_index.js";
 
 function mark_canvas_dirty(app)
@@ -50,7 +49,7 @@ function center_bounds_without_zoom(app, bounds)
 	mark_canvas_dirty(app);
 }
 
-function navigate_to_bounds(app, bounds, apply_jump_zoom)
+function navigate_to_bounds(app, bounds, jump_zoom)
 {
 	if (!bounds || !app?.canvas)
 	{
@@ -64,7 +63,7 @@ function navigate_to_bounds(app, bounds, apply_jump_zoom)
 		return;
 	}
 
-	if (!apply_jump_zoom)
+	if (!Number.isFinite(jump_zoom))
 	{
 		center_bounds_without_zoom(app, bounds);
 		return;
@@ -79,7 +78,7 @@ function navigate_to_bounds(app, bounds, apply_jump_zoom)
 				mark_canvas_dirty(app);
 			},
 			{
-				zoom: DEFAULT_JUMP_ZOOM,
+				zoom: jump_zoom,
 			}
 		);
 		return;
@@ -87,7 +86,7 @@ function navigate_to_bounds(app, bounds, apply_jump_zoom)
 
 	if (typeof drag_scale.fitToBounds === "function")
 	{
-		drag_scale.fitToBounds(bounds, { zoom: DEFAULT_JUMP_ZOOM });
+		drag_scale.fitToBounds(bounds, { zoom: jump_zoom });
 		mark_canvas_dirty(app);
 		return;
 	}
@@ -114,7 +113,9 @@ export function create_navigator(app, settings_store, sidebar_controller)
 
 		const keep_panel_open = options.keep_panel_open ?? false;
 		const refocus_search = options.refocus_search ?? (() => {});
-		const apply_jump_zoom = settings_store.is_jump_zoom_enabled();
+		const jump_zoom = settings_store.is_jump_zoom_enabled()
+			? settings_store.get_jump_zoom()
+			: null;
 		const current_graph = app.canvas.graph;
 		const target_graph = entry.graph_ref;
 
@@ -122,19 +123,19 @@ export function create_navigator(app, settings_store, sidebar_controller)
 		{
 			if (entry.kind === "group")
 			{
-				navigate_to_bounds(app, entry.bounds, apply_jump_zoom);
+				navigate_to_bounds(app, entry.bounds, jump_zoom);
 			}
 			else if (entry.kind === "subgraph_entry")
 			{
-				navigate_to_bounds(app, get_graph_bounds(target_graph), apply_jump_zoom);
+				navigate_to_bounds(app, get_graph_bounds(target_graph), jump_zoom);
 			}
 			else
 			{
 				select_node(app, entry.raw_ref);
 
-				if (apply_jump_zoom)
+				if (Number.isFinite(jump_zoom))
 				{
-					navigate_to_bounds(app, get_node_bounds(entry.raw_ref), true);
+					navigate_to_bounds(app, get_node_bounds(entry.raw_ref), jump_zoom);
 				}
 				else if (typeof app.canvas.centerOnNode === "function")
 				{

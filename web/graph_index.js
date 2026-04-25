@@ -84,6 +84,25 @@ function get_graph_title(graph, fallback_label = "Graph")
 	return fallback_label;
 }
 
+function get_graph_summary(graph)
+{
+	const node_count = get_graph_nodes(graph).length;
+	const group_count = get_graph_groups(graph).length;
+	const parts = [];
+
+	if (node_count)
+	{
+		parts.push(`${node_count} ${node_count === 1 ? "node" : "nodes"}`);
+	}
+
+	if (group_count)
+	{
+		parts.push(`${group_count} ${group_count === 1 ? "group" : "groups"}`);
+	}
+
+	return parts.join(", ");
+}
+
 function get_union_bounds(bounds_list)
 {
 	if (!bounds_list.length)
@@ -483,12 +502,15 @@ function enumerate_graph_entries(app)
 						"Subgraph",
 						"",
 						path_label,
-						node.subgraph,
-						node,
-						subgraph_bounds,
-						`Open subgraph from node ${node?.id ?? "?"}`
-					)
-				);
+					node.subgraph,
+					node,
+					subgraph_bounds,
+					[
+						`from node ${node?.id ?? "?"}`,
+						get_graph_summary(node.subgraph),
+					].filter(Boolean).join(" | ")
+				)
+			);
 
 				traverse_graph(node.subgraph, [...path_parts, node_label]);
 			}
