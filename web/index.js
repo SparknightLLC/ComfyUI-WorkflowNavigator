@@ -151,7 +151,9 @@ app.registerExtension({
 	{
 		await settings_store.install();
 
-		app.extensionManager?.registerSidebarTab?.({
+		const sidebar_manager = app.extensionManager?.sidebarTab ?? app.extensionManager;
+
+		sidebar_manager?.registerSidebarTab?.({
 			id: TAB_ID,
 			icon: DEFAULT_ICON,
 			title: "Navigator",

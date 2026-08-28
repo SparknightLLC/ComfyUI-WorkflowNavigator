@@ -4,6 +4,7 @@ export function create_sidebar_controller(app, tab_id)
 	{
 		const selectors = [
 			`.${tab_id}-tab-button`,
+			`[data-testid="${tab_id}-tab-button"]`,
 			`[data-sidebar-tab-id="${tab_id}"]`,
 			`[data-tab-id="${tab_id}"]`,
 		];
@@ -21,14 +22,16 @@ export function create_sidebar_controller(app, tab_id)
 		return null;
 	}
 
-	function get_extension_manager()
+	function get_sidebar_manager()
 	{
-		return app?.extensionManager ?? null;
+		const extension_manager = app?.extensionManager;
+
+		return extension_manager?.sidebarTab ?? extension_manager ?? null;
 	}
 
 	function get_active_sidebar_tab_id()
 	{
-		const manager = get_extension_manager();
+		const manager = get_sidebar_manager();
 
 		return manager?.activeSidebarTabId ?? manager?.activeSidebarTab?.id ?? null;
 	}
@@ -62,7 +65,7 @@ export function create_sidebar_controller(app, tab_id)
 
 	function apply_active_tab_id(next_tab_id)
 	{
-		const manager = get_extension_manager();
+		const manager = get_sidebar_manager();
 
 		if (!manager || !("activeSidebarTabId" in manager))
 		{
@@ -76,7 +79,7 @@ export function create_sidebar_controller(app, tab_id)
 
 	function set_open(next_open)
 	{
-		const manager = get_extension_manager();
+		const manager = get_sidebar_manager();
 		const sidebar_tab_button = get_sidebar_tab_button();
 		const manager_open = get_active_sidebar_tab_id() === tab_id;
 		const button_open = is_button_open(sidebar_tab_button);

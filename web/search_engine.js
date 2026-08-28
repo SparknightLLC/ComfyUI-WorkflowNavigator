@@ -1,6 +1,7 @@
 import {
 	FILTER_ALL,
 	FILTER_FRAMES_GROUPS,
+	FILTER_IDS,
 	FILTER_NOTES,
 	FILTER_SUBGRAPHS,
 	FILTER_TITLES,
@@ -75,6 +76,8 @@ function get_field_text_for_filter(entry, filter_id)
 {
 	switch (filter_id)
 	{
+		case FILTER_IDS:
+			return entry.id_lc;
 		case FILTER_TITLES:
 			return entry.title_lc;
 		case FILTER_TYPES:
@@ -94,6 +97,8 @@ function entry_allowed_for_filter(entry, filter_id)
 {
 	switch (filter_id)
 	{
+		case FILTER_IDS:
+			return entry.kind === "node";
 		case FILTER_NOTES:
 			return Boolean(entry.note_lc);
 		case FILTER_FRAMES_GROUPS:
@@ -144,6 +149,8 @@ function get_entry_score(entry, query_terms, filter_id)
 {
 	switch (filter_id)
 	{
+		case FILTER_IDS:
+			return get_match_score(entry.id_lc, query_terms, 0);
 		case FILTER_TITLES:
 			return get_match_score(entry.title_lc, query_terms, 0);
 		case FILTER_TYPES:
@@ -157,13 +164,16 @@ function get_entry_score(entry, query_terms, filter_id)
 		case FILTER_ALL:
 		default:
 		{
+			const id_score = entry.kind === "node"
+				? get_match_score(entry.id_lc, query_terms, 0)
+				: Number.POSITIVE_INFINITY;
 			const title_score = get_match_score(entry.title_lc, query_terms, 0);
 			const type_score = get_match_score(entry.type_lc, query_terms, 100);
 			const note_score = get_match_score(entry.note_lc, query_terms, 200);
 			const path_score = get_match_score(entry.path_lc, query_terms, 300);
 			const meta_score = get_match_score(entry.meta_lc, query_terms, 350);
 
-			return Math.min(title_score, type_score, note_score, path_score, meta_score);
+			return Math.min(id_score, title_score, type_score, note_score, path_score, meta_score);
 		}
 	}
 }

@@ -10,6 +10,7 @@ export const MAX_USAGE_RECORDS = 500;
 export const NOTE_LIKE_PATTERN = /(note|comment|annotation|markdown|sticky)/i;
 
 export const FILTER_ALL = "all";
+export const FILTER_IDS = "ids";
 export const FILTER_TITLES = "titles";
 export const FILTER_TYPES = "types";
 export const FILTER_NOTES = "notes";
@@ -17,6 +18,7 @@ export const FILTER_FRAMES_GROUPS = "frames_groups";
 export const FILTER_SUBGRAPHS = "subgraphs";
 
 export const FILTER_DEFINITIONS = [
+	{ id: FILTER_IDS, label: "IDs" },
 	{ id: FILTER_TITLES, label: "Titles" },
 	{ id: FILTER_TYPES, label: "Types" },
 	{ id: FILTER_NOTES, label: "Notes" },

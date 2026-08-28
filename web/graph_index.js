@@ -414,7 +414,9 @@ function build_entry(
 	const normalized_note = get_trimmed_string(note_text);
 	const normalized_path = get_trimmed_string(path_label);
 	const normalized_meta = get_trimmed_string(meta_label);
+	const normalized_id = normalize_query(String(id ?? ""));
 	const search_segments = [
+		normalized_id,
 		normalized_title,
 		normalized_type,
 		normalized_note,
@@ -436,6 +438,7 @@ function build_entry(
 		bounds: bounds,
 		graph_ref: graph_ref,
 		raw_ref: raw_ref,
+		id_lc: normalized_id,
 		title_lc: normalize_query(normalized_title),
 		type_lc: normalize_query(normalized_type),
 		note_lc: normalize_query(normalized_note),
