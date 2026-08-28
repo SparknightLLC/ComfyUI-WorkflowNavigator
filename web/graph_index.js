@@ -342,6 +342,92 @@ function get_note_text(node)
 		.trim();
 }
 
+function get_node_value_items(node)
+{
+	if (!node)
+	{
+		return [];
+	}
+
+	const widgets = [];
+	const seen_widgets = new Set();
+
+	function add_widget(widget)
+	{
+		if (!widget || seen_widgets.has(widget))
+		{
+			return;
+		}
+
+		seen_widgets.add(widget);
+		widgets.push(widget);
+	}
+
+	if (Array.isArray(node.widgets))
+	{
+		for (const widget of node.widgets)
+		{
+			add_widget(widget);
+		}
+	}
+
+	if (Array.isArray(node.inputs) && typeof node.getWidgetFromSlot === "function")
+	{
+		for (const input of node.inputs)
+		{
+			add_widget(node.getWidgetFromSlot(input));
+		}
+	}
+
+	const value_items = [];
+	const seen_value_items = new Set();
+
+	for (const widget of widgets)
+	{
+		if (!get_trimmed_string(widget?.name) || widget?.options?.serialize === false)
+		{
+			continue;
+		}
+
+		const input = typeof node.getSlotFromWidget === "function"
+			? node.getSlotFromWidget(widget)
+			: null;
+
+		const input_index = Array.isArray(node.inputs) ? node.inputs.indexOf(input) : -1;
+		const input_is_connected = input_index >= 0 && typeof node.isInputConnected === "function"
+			? node.isInputConnected(input_index)
+			: input?.link != null || (Array.isArray(input?.linkIds) && input.linkIds.length > 0);
+
+		if (input_is_connected)
+		{
+			continue;
+		}
+
+		const value = get_trimmed_string(widget?.value);
+
+		if (!value)
+		{
+			continue;
+		}
+
+		const name = get_trimmed_string(widget?.label) || get_trimmed_string(widget?.name);
+		const value_item_key = `${name}\0${value}`;
+
+		if (seen_value_items.has(value_item_key))
+		{
+			continue;
+		}
+
+		seen_value_items.add(value_item_key);
+		value_items.push({
+			name: name,
+			value: value,
+		});
+	}
+
+	return value_items;
+}
+
 function get_kind_order(kind)
 {
 	switch (kind)
@@ -402,6 +488,7 @@ function build_entry(
 	title,
 	type_label,
 	note_text,
+	value_items,
 	path_label,
 	graph_ref,
 	raw_ref,
@@ -412,6 +499,8 @@ function build_entry(
 	const normalized_title = get_trimmed_string(title);
 	const normalized_type = get_trimmed_string(type_label);
 	const normalized_note = get_trimmed_string(note_text);
+	const normalized_value_items = Array.isArray(value_items) ? value_items : [];
+	const normalized_value = normalized_value_items.map((item) => item.value).join(" ").trim();
 	const normalized_path = get_trimmed_string(path_label);
 	const normalized_meta = get_trimmed_string(meta_label);
 	const normalized_id = normalize_query(String(id ?? ""));
@@ -420,6 +509,7 @@ function build_entry(
 		normalized_title,
 		normalized_type,
 		normalized_note,
+		normalized_value,
 		normalized_path,
 		normalized_meta,
 	];
@@ -431,6 +521,8 @@ function build_entry(
 		title: normalized_title,
 		type: normalized_type,
 		note_text: normalized_note,
+		value_items: normalized_value_items,
+		value_text: normalized_value,
 		path: normalized_path,
 		meta_label: normalized_meta,
 		search_text: normalize_query(search_segments.filter(Boolean).join(" ")),
@@ -442,6 +534,7 @@ function build_entry(
 		title_lc: normalize_query(normalized_title),
 		type_lc: normalize_query(normalized_type),
 		note_lc: normalize_query(normalized_note),
+		value_lc: normalize_query(normalized_value),
 		path_lc: normalize_query(normalized_path),
 		meta_lc: normalize_query(normalized_meta),
 		stable_index: -1,
@@ -474,6 +567,7 @@ function enumerate_graph_entries(app)
 			const node_label = get_node_label(node);
 			const type_label = get_node_type_label(node);
 			const note_text = get_note_text(node);
+			const value_items = get_node_value_items(node);
 			const bounds = get_node_bounds(node);
 			const path_label = get_path_label(path_parts);
 
@@ -484,6 +578,7 @@ function enumerate_graph_entries(app)
 					node_label,
 					type_label,
 					note_text,
+					value_items,
 					path_label,
 					graph,
 					node,
@@ -504,16 +599,17 @@ function enumerate_graph_entries(app)
 						subgraph_title,
 						"Subgraph",
 						"",
+						[],
 						path_label,
-					node.subgraph,
-					node,
-					subgraph_bounds,
-					[
-						`from node ${node?.id ?? "?"}`,
-						get_graph_summary(node.subgraph),
-					].filter(Boolean).join(" | ")
-				)
-			);
+						node.subgraph,
+						node,
+						subgraph_bounds,
+						[
+							`from node ${node?.id ?? "?"}`,
+							get_graph_summary(node.subgraph),
+						].filter(Boolean).join(" | ")
+					)
+				);
 
 				traverse_graph(node.subgraph, [...path_parts, node_label]);
 			}
@@ -530,6 +626,7 @@ function enumerate_graph_entries(app)
 					get_group_title(group),
 					"Group",
 					"",
+					[],
 					get_path_label(path_parts),
 					graph,
 					group,

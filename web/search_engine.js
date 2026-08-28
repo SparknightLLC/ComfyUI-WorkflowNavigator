@@ -6,6 +6,7 @@ import {
 	FILTER_SUBGRAPHS,
 	FILTER_TITLES,
 	FILTER_TYPES,
+	FILTER_VALUES,
 	MAX_USAGE_RECORDS,
 	USAGE_STORAGE_KEY,
 } from "./constants.js";
@@ -84,6 +85,8 @@ function get_field_text_for_filter(entry, filter_id)
 			return entry.type_lc;
 		case FILTER_NOTES:
 			return entry.note_lc;
+		case FILTER_VALUES:
+			return entry.value_lc;
 		case FILTER_FRAMES_GROUPS:
 		case FILTER_SUBGRAPHS:
 			return normalize_query(`${entry.title} ${entry.path} ${entry.meta_label}`);
@@ -101,6 +104,8 @@ function entry_allowed_for_filter(entry, filter_id)
 			return entry.kind === "node";
 		case FILTER_NOTES:
 			return Boolean(entry.note_lc);
+		case FILTER_VALUES:
+			return entry.kind === "node" && Boolean(entry.value_lc);
 		case FILTER_FRAMES_GROUPS:
 			return entry.kind === "group";
 		case FILTER_SUBGRAPHS:
@@ -157,6 +162,8 @@ function get_entry_score(entry, query_terms, filter_id)
 			return get_match_score(entry.type_lc, query_terms, 100);
 		case FILTER_NOTES:
 			return get_match_score(entry.note_lc, query_terms, 200);
+		case FILTER_VALUES:
+			return get_match_score(entry.value_lc, query_terms, 250);
 		case FILTER_FRAMES_GROUPS:
 			return get_match_score(get_field_text_for_filter(entry, filter_id), query_terms, 300);
 		case FILTER_SUBGRAPHS:
@@ -170,10 +177,11 @@ function get_entry_score(entry, query_terms, filter_id)
 			const title_score = get_match_score(entry.title_lc, query_terms, 0);
 			const type_score = get_match_score(entry.type_lc, query_terms, 100);
 			const note_score = get_match_score(entry.note_lc, query_terms, 200);
+			const value_score = get_match_score(entry.value_lc, query_terms, 250);
 			const path_score = get_match_score(entry.path_lc, query_terms, 300);
 			const meta_score = get_match_score(entry.meta_lc, query_terms, 350);
 
-			return Math.min(id_score, title_score, type_score, note_score, path_score, meta_score);
+			return Math.min(id_score, title_score, type_score, note_score, value_score, path_score, meta_score);
 		}
 	}
 }

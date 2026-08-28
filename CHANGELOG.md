@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-<details open><summary>0.3.0 - 27 August 2026</summary>
+<details open><summary>0.4.0 - 28 August 2026</summary>
+
+### Added
+
+- Added a `Values` filter for finding nodes by their current string input values, including selected checkpoint, LoRA, and VAE filenames.
+
+</details>
+
+<details><summary>0.3.0 - 27 August 2026</summary>
 
 ### Added
 

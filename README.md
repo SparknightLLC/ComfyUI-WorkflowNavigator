@@ -6,7 +6,7 @@ A frontend-only extension for [ComfyUI](https://github.com/comfyanonymous/ComfyU
 
 This is designed for large graphs and/or small displays, where manually panning around the canvas gets tedious. It lets you open a search panel, type what you are looking for, move through results with the keyboard, and jump directly to the matching part of the current workflow.
 
-It can locate nodes, notes, groups, subgraphs, and more.
+It can locate nodes, notes, current string input values, groups, subgraphs, and more.
 
 ### Installation
 
@@ -36,6 +36,7 @@ Settings are available in ComfyUI's settings panel for max rendered results, usa
 - Uses lazy graph enumeration with invalidation on workflow changes.
 - Supports keyboard-first result navigation inside the panel.
 - Can optionally prioritize workflow items you jump to often.
+- Finds nodes by current string input values, including selected checkpoint, LoRA, and VAE filenames.
 - Lets you keep, disable, or tune the zoom level used when jumping.
 - Jumps directly to matching workflow items, including:
 	- nodes in the current workflow

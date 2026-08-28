@@ -14,6 +14,7 @@ export const FILTER_IDS = "ids";
 export const FILTER_TITLES = "titles";
 export const FILTER_TYPES = "types";
 export const FILTER_NOTES = "notes";
+export const FILTER_VALUES = "values";
 export const FILTER_FRAMES_GROUPS = "frames_groups";
 export const FILTER_SUBGRAPHS = "subgraphs";
 
@@ -22,6 +23,7 @@ export const FILTER_DEFINITIONS = [
 	{ id: FILTER_TITLES, label: "Titles" },
 	{ id: FILTER_TYPES, label: "Types" },
 	{ id: FILTER_NOTES, label: "Notes" },
+	{ id: FILTER_VALUES, label: "Values" },
 	{ id: FILTER_FRAMES_GROUPS, label: "Frames/Groups" },
 	{ id: FILTER_SUBGRAPHS, label: "Subgraphs" },
 ];

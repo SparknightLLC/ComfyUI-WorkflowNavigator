@@ -32,7 +32,7 @@ function get_short_meta_text(value, max_length = 96)
 	return `${normalized_value.slice(0, max_length - 3).trim()}...`;
 }
 
-function get_result_meta_text(entry)
+function get_result_meta_text(entry, query)
 {
 	const parts = [];
 
@@ -63,6 +63,24 @@ function get_result_meta_text(entry)
 	if (entry.note_text)
 	{
 		parts.push(`note: ${get_short_meta_text(entry.note_text)}`);
+	}
+
+	const query_terms = normalize_query(query).split(" ").filter(Boolean);
+	const matching_value_item = query_terms.length
+		? entry.value_items?.find((item) =>
+		{
+			const normalized_value = normalize_query(item.value);
+			return query_terms.every((query_term) => normalized_value.includes(query_term));
+		})
+		: null;
+
+	if (matching_value_item)
+	{
+		const value_label = matching_value_item.name
+			? `${matching_value_item.name}: ${matching_value_item.value}`
+			: matching_value_item.value;
+
+		parts.push(`value: ${get_short_meta_text(value_label)}`);
 	}
 
 	return parts.join("  |  ");
@@ -328,7 +346,7 @@ export function create_navigator_panel(dependencies)
 			badge.textContent = get_entry_kind_label(entry.kind);
 			title.appendChild(badge);
 			append_highlighted_text(title, entry.title);
-			meta.textContent = get_result_meta_text(entry);
+			meta.textContent = get_result_meta_text(entry, state.query);
 
 			row.appendChild(title);
 			row.appendChild(meta);
@@ -396,7 +414,7 @@ export function create_navigator_panel(dependencies)
 		const next_render_key = [
 			active_filter_ids.join(","),
 			normalize_query(state.query),
-			next_results.map((entry) => entry.entry_id).join("|"),
+			next_results.map((entry) => `${entry.entry_id}:${entry.value_lc}`).join("|"),
 		].join("::");
 
 		state.results = next_results;
